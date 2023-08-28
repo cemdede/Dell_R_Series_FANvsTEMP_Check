@@ -13,13 +13,25 @@ def get_temp_info():
     result = subprocess.run(["sudo", "ipmitool", "sdr", "type", "temperature"], capture_output=True, text=True)
     return result.stdout.strip()
 
-def get_color_for_value(value, low, medium, high):
-    if value <= low:
-        return 1  # Green
-    elif low < value <= medium:
-        return 2  # Yellow
-    else:
-        return 3  # Red
+def get_color_for_value(value, scale_type):
+    if scale_type == 'temperature':
+        if 34 <= value <= 38:
+            return 1  # Green
+        elif 38 < value <= 50:
+            return 2  # Yellow
+        elif 50 < value <= 70:
+            return 4  # Orange
+        else:
+            return 3  # Red
+    elif scale_type == 'fan_speed':
+        if 2000 <= value <= 5000:
+            return 1  # Green
+        elif 5000 < value <= 9000:
+            return 2  # Yellow
+        elif 9000 < value <= 13000:
+            return 4  # Orange
+        else:
+            return 3  # Red
 
 def extract_numeric_value(s, pattern):
     match = re.search(pattern, s)
@@ -29,8 +41,10 @@ def main(stdscr):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-    
+    curses.init_pair(3, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
+
+
     stdscr.nodelay(True)  # Make getch non-blocking
 
     while True:
@@ -43,14 +57,14 @@ def main(stdscr):
         fan_speeds = [extract_numeric_value(s, r"\b(\d+\.?\d*) RPM\b") for s in fan_info if extract_numeric_value(s, r"\b(\d+\.?\d*) RPM\b") is not None]
         mean_fan_speed = int(sum(fan_speeds) / len(fan_speeds)) if fan_speeds else 0
 
-        temp_color = get_color_for_value(highest_temp, 28, 38, 100)
-        fan_speed_color = get_color_for_value(mean_fan_speed, 300, 5000, 10000)
+        temp_color = get_color_for_value(highest_temp, 'temperature')
+        fan_speed_color = get_color_for_value(mean_fan_speed, 'fan_speed')
 
         stdscr.addstr(0, 0, f"Heat of Highest Temp Sensor: {highest_temp}C ", curses.color_pair(temp_color))
         stdscr.addstr(0, 60, f"Mean Fan Speed: {mean_fan_speed} RPM ", curses.color_pair(fan_speed_color))
 
         stdscr.addstr(1, 0, '-' * 120)
-        
+
         for i in range(max(len(fan_info), len(temp_info))):
             stdscr.addstr(i + 2, 55, "|", curses.color_pair(1))
 
@@ -62,9 +76,10 @@ def main(stdscr):
 
         stdscr.refresh()
 
-        c = stdscr.getch() if stdscr.getch() != -1 else None
-        if c == ord('q'):
-            break
+        c = stdscr.getch()  # Capture the keypress
+        if c != -1:  # If a key was pressed
+            if c == ord('q'):
+                break  # Exit the loop when 'q' is pressed
 
         time.sleep(2)  # Refresh every 2 seconds
 
