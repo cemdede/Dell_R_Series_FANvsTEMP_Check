@@ -21,3 +21,13 @@ Click "q" to quit.
 **realtime_monitorV2.py** 
 
 This one includes a spinner that would remind the user that it is active.
+
+#################
+
+**realtime_monitorV3.py** 
+
+Added the ability to monitor Nvidia Card Temperatures as well.
+
+<img width="1068" alt="Screenshot 2023-09-06 at 9 36 47 AM" src="https://github.com/cemdede/Dell_R_Series_FANvsTEMP_Check/assets/14031604/c2f9ed6b-73b4-424c-83d6-ca2741a7f467">
+
+Cheers !!!!
